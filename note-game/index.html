@@ -5,6 +5,9 @@
 <title>Note & Number</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+  * {
+    box-sizing: border-box;
+  }
   html, body {
     height: 100%;
     margin: 0;
@@ -14,17 +17,20 @@
     background: #14161a;
     color: #f5f5f7;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+    touch-action: manipulation;
   }
   .card {
     text-align: center;
+    padding: 0 16px;
   }
   .note {
-    font-size: 18vw;
+    font-size: clamp(56px, 18vw, 220px);
     font-weight: 700;
     line-height: 1;
   }
   .number {
-    font-size: 8vw;
+    font-size: clamp(28px, 8vw, 100px);
     font-weight: 500;
     color: #8ab4f8;
     margin-top: 0.2em;
@@ -37,9 +43,9 @@
   }
   .hotspot {
     position: fixed;
-    bottom: 20px;
-    width: 110px;
-    height: 110px;
+    bottom: 12px;
+    width: clamp(64px, 18vw, 110px);
+    height: clamp(64px, 18vw, 110px);
     cursor: pointer;
     z-index: 5;
     border: 3px dashed #666;
@@ -48,7 +54,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5em;
+    font-size: clamp(1.6em, 5vw, 2.5em);
     font-weight: 700;
     color: #666;
     user-select: none;
@@ -59,28 +65,28 @@
     background: rgba(138, 180, 248, 0.1);
   }
   .hotspot.left {
-    left: 20px;
+    left: 12px;
   }
   .hotspot.right {
-    right: 20px;
+    right: 12px;
   }
   .hidden-pic {
     position: fixed;
-    bottom: 20px;
-    max-width: 300px;
-    max-height: 300px;
+    bottom: 12px;
+    max-width: min(300px, 42vw);
+    max-height: min(300px, 42vw);
     display: none;
     border-radius: 10px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
     z-index: 10;
   }
   .hidden-pic.left {
-    left: 20px;
+    left: 12px;
   }
   .hidden-pic.right {
-    right: 20px;
-    max-width: 600px;
-    max-height: 600px;
+    right: 12px;
+    max-width: min(600px, 88vw);
+    max-height: min(600px, 60vh);
   }
 </style>
 </head>
@@ -88,7 +94,7 @@
   <div class="card">
     <div class="note" id="note">–</div>
     <div class="number" id="number">–</div>
-    <div class="hint">press SPACE</div>
+    <div class="hint">press SPACE or tap anywhere</div>
   </div>
   <div class="hotspot left" id="hotspot" title="Click to reveal the shape">?</div>
   <img class="hidden-pic left" id="hidden-pic" alt="">
@@ -132,15 +138,20 @@
     hotspotFretboardEl.style.display = "flex";
   }
 
-  hotspotEl.addEventListener("click", () => {
+  hotspotEl.addEventListener("click", (e) => {
+    e.stopPropagation();
     hotspotEl.style.display = "none";
     hiddenPicEl.style.display = "block";
   });
 
-  hotspotFretboardEl.addEventListener("click", () => {
+  hotspotFretboardEl.addEventListener("click", (e) => {
+    e.stopPropagation();
     hotspotFretboardEl.style.display = "none";
     hiddenPicFretboardEl.style.display = "block";
   });
+
+  hiddenPicEl.addEventListener("click", (e) => e.stopPropagation());
+  hiddenPicFretboardEl.addEventListener("click", (e) => e.stopPropagation());
 
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
@@ -148,6 +159,9 @@
       roll();
     }
   });
+
+  // Touch devices have no spacebar, so tapping anywhere rolls too.
+  document.body.addEventListener("click", roll);
 </script>
 </body>
 </html>
