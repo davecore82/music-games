@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Fretboard Trainer</title>
+<title>Entraîneur de manche</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   * {
@@ -176,23 +176,23 @@
 <body>
   <div class="wrap">
     <div class="mode-toggle">
-      <span>Click fret</span>
+      <span>Cliquer sur la case</span>
       <label class="switch">
         <input type="checkbox" id="mode-switch">
         <span class="slider"></span>
       </label>
-      <span>Type fret number</span>
+      <span>Taper le numéro de case</span>
     </div>
-    <div class="prompt">Place <span class="note" id="target-note">–</span> on string <span id="target-string">–</span></div>
+    <div class="prompt">Placez <span class="note" id="target-note">–</span> sur la corde <span id="target-string">–</span></div>
     <div class="feedback" id="feedback"></div>
     <div class="board-container" id="board-container">
       <div class="labels" id="labels"></div>
-      <img id="board" src="fretboard.png" alt="Guitar fretboard">
+      <img id="board" src="fretboard.png" alt="Manche de guitare">
       <div class="marker" id="marker"></div>
     </div>
     <div class="number-entry" id="number-entry">
       <input type="number" id="fret-input" min="0" max="11" inputmode="numeric" autocomplete="off">
-      <button id="submit-fret">Submit</button>
+      <button id="submit-fret">Valider</button>
     </div>
   </div>
 
@@ -290,11 +290,11 @@
     const correct = guess === current.fret;
 
     if (correct) {
-      feedbackEl.textContent = "Correct!";
+      feedbackEl.textContent = "Correct !";
       feedbackEl.className = "feedback correct";
       setTimeout(nextQuestion, 700);
     } else {
-      feedbackEl.textContent = "Try again";
+      feedbackEl.textContent = "Réessayez";
       feedbackEl.className = "feedback wrong";
     }
   }
@@ -333,11 +333,11 @@
     showMarker(fracX, fracY, correct);
 
     if (correct) {
-      feedbackEl.textContent = "Correct!";
+      feedbackEl.textContent = "Correct !";
       feedbackEl.className = "feedback correct";
       setTimeout(nextQuestion, 700);
     } else {
-      feedbackEl.textContent = "Try again";
+      feedbackEl.textContent = "Réessayez";
       feedbackEl.className = "feedback wrong";
     }
   });
