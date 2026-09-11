@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Note & Number</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #14161a;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .card {
+    text-align: center;
+  }
+  .note {
+    font-size: 18vw;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .number {
+    font-size: 8vw;
+    font-weight: 500;
+    color: #8ab4f8;
+    margin-top: 0.2em;
+  }
+  .hint {
+    margin-top: 2em;
+    color: #888;
+    font-size: 1.1em;
+    letter-spacing: 0.05em;
+  }
+  .hotspot {
+    position: fixed;
+    bottom: 20px;
+    width: 110px;
+    height: 110px;
+    cursor: pointer;
+    z-index: 5;
+    border: 3px dashed #666;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #666;
+    user-select: none;
+  }
+  .hotspot:hover {
+    border-color: #8ab4f8;
+    color: #8ab4f8;
+    background: rgba(138, 180, 248, 0.1);
+  }
+  .hotspot.left {
+    left: 20px;
+  }
+  .hotspot.right {
+    right: 20px;
+  }
+  .hidden-pic {
+    position: fixed;
+    bottom: 20px;
+    max-width: 300px;
+    max-height: 300px;
+    display: none;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+  }
+  .hidden-pic.left {
+    left: 20px;
+  }
+  .hidden-pic.right {
+    right: 20px;
+    max-width: 600px;
+    max-height: 600px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="note" id="note">–</div>
+    <div class="number" id="number">–</div>
+    <div class="hint">press SPACE</div>
+  </div>
+  <div class="hotspot left" id="hotspot" title="Click to reveal the shape">?</div>
+  <img class="hidden-pic left" id="hidden-pic" alt="">
+  <div class="hotspot right" id="hotspot-fretboard" title="Click to reveal the fretboard">?</div>
+  <img class="hidden-pic right" id="hidden-pic-fretboard" src="fretboard-with-notes.png" alt="Fretboard with notes">
+
+<script>
+  // Each entry is either a single natural note, or [sharpName, flatName] for an accidental.
+  const NOTES = [
+    "C", ["C#", "Db"], "D", ["D#", "Eb"], "E", "F",
+    ["F#", "Gb"], "G", ["G#", "Ab"], "A", ["A#", "Bb"], "B"
+  ];
+  const NUMBERS = [61, 64, 51, 54, 41];
+
+  const noteEl = document.getElementById("note");
+  const numberEl = document.getElementById("number");
+  const hotspotEl = document.getElementById("hotspot");
+  const hiddenPicEl = document.getElementById("hidden-pic");
+  const hotspotFretboardEl = document.getElementById("hotspot-fretboard");
+  const hiddenPicFretboardEl = document.getElementById("hidden-pic-fretboard");
+
+  function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function randomNote() {
+    const entry = randomFrom(NOTES);
+    return Array.isArray(entry) ? randomFrom(entry) : entry;
+  }
+
+  function roll() {
+    noteEl.textContent = randomNote();
+    const number = randomFrom(NUMBERS);
+    numberEl.textContent = number;
+
+    hiddenPicEl.src = number + ".png";
+    hiddenPicEl.style.display = "none";
+    hotspotEl.style.display = "flex";
+
+    hiddenPicFretboardEl.style.display = "none";
+    hotspotFretboardEl.style.display = "flex";
+  }
+
+  hotspotEl.addEventListener("click", () => {
+    hotspotEl.style.display = "none";
+    hiddenPicEl.style.display = "block";
+  });
+
+  hotspotFretboardEl.addEventListener("click", () => {
+    hotspotFretboardEl.style.display = "none";
+    hiddenPicFretboardEl.style.display = "block";
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+      e.preventDefault();
+      roll();
+    }
+  });
+</script>
+</body>
+</html>

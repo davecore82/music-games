@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fretboard Trainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: #14161a;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wrap {
+    text-align: center;
+    width: 100%;
+    max-width: 1100px;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  .prompt {
+    font-size: 2.4em;
+    font-weight: 700;
+    margin-bottom: 0.3em;
+  }
+  .prompt .note {
+    color: #8ab4f8;
+  }
+  .feedback {
+    height: 1.6em;
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-bottom: 0.6em;
+  }
+  .feedback.correct { color: #6fcf6f; }
+  .feedback.wrong { color: #e06666; }
+
+  .board-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+  .labels {
+    position: absolute;
+    left: -32px;
+    top: 0;
+    height: 100%;
+    width: 28px;
+  }
+  .labels span {
+    position: absolute;
+    left: 0;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 1em;
+    font-weight: 600;
+  }
+  .labels span.active {
+    color: #8ab4f8;
+  }
+  #board {
+    width: 100%;
+    display: block;
+    cursor: crosshair;
+    border-radius: 4px;
+    user-select: none;
+  }
+  .marker {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+  }
+  .marker.show-correct {
+    opacity: 1;
+    background: rgba(111, 207, 111, 0.85);
+    box-shadow: 0 0 12px rgba(111, 207, 111, 0.9);
+  }
+  .marker.show-wrong {
+    opacity: 1;
+    background: rgba(224, 102, 102, 0.85);
+    box-shadow: 0 0 12px rgba(224, 102, 102, 0.9);
+  }
+
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6em;
+    margin-bottom: 1.4em;
+    color: #aaa;
+    font-size: 1em;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 26px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .switch .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #444;
+    border-radius: 26px;
+    transition: 0.2s;
+  }
+  .switch .slider::before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: #f5f5f7;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  .switch input:checked + .slider {
+    background: #8ab4f8;
+  }
+  .switch input:checked + .slider::before {
+    transform: translateX(20px);
+  }
+
+  .number-entry {
+    display: none;
+    gap: 0.6em;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1em;
+  }
+  .number-entry input {
+    width: 90px;
+    font-size: 1.6em;
+    text-align: center;
+    padding: 0.2em 0;
+    border-radius: 8px;
+    border: 2px solid #444;
+    background: #1e2126;
+    color: #f5f5f7;
+  }
+  .number-entry input:focus {
+    outline: none;
+    border-color: #8ab4f8;
+  }
+  .number-entry button {
+    font-size: 1.2em;
+    padding: 0.4em 1em;
+    border-radius: 8px;
+    border: none;
+    background: #8ab4f8;
+    color: #14161a;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="mode-toggle">
+      <span>Click fret</span>
+      <label class="switch">
+        <input type="checkbox" id="mode-switch">
+        <span class="slider"></span>
+      </label>
+      <span>Type fret number</span>
+    </div>
+    <div class="prompt">Place <span class="note" id="target-note">–</span> on string <span id="target-string">–</span></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="board-container" id="board-container">
+      <div class="labels" id="labels"></div>
+      <img id="board" src="fretboard.png" alt="Guitar fretboard">
+      <div class="marker" id="marker"></div>
+    </div>
+    <div class="number-entry" id="number-entry">
+      <input type="number" id="fret-input" min="0" max="11" inputmode="numeric" autocomplete="off">
+      <button id="submit-fret">Submit</button>
+    </div>
+  </div>
+
+<script>
+  // Natural notes with sharp/flat pairs for the accidentals between them.
+  const NOTES = [
+    { name: "C", semitone: 0 },
+    { name: ["C#", "Db"], semitone: 1 },
+    { name: "D", semitone: 2 },
+    { name: ["D#", "Eb"], semitone: 3 },
+    { name: "E", semitone: 4 },
+    { name: "F", semitone: 5 },
+    { name: ["F#", "Gb"], semitone: 6 },
+    { name: "G", semitone: 7 },
+  ];
+
+  // Open-string semitone for strings 4, 5, 6 (standard tuning).
+  const OPEN_STRING_SEMITONE = { 4: 2, 5: 9, 6: 4 };
+  const TARGET_STRINGS = [4, 5, 6];
+
+  // Fret zone boundaries as fractions of image width (0..1), 13 zones for frets 0-12.
+  const FRET_EDGES = [0, 0.1331, 0.2308, 0.3227, 0.4096, 0.4917, 0.5689, 0.6419, 0.7109, 0.7758, 0.8372, 0.8952, 0.9498, 1.0];
+
+  // String zone boundaries as fractions of image height (0..1), 6 zones for strings 1-6.
+  const STRING_EDGES = [0.0422, 0.1846, 0.3271, 0.4688, 0.6108, 0.7534, 0.8953];
+  // Vertical center of each string (for label placement), as fraction of image height.
+  const STRING_CENTERS = [0.1133, 0.2559, 0.3984, 0.5391, 0.6826, 0.8242];
+
+  const targetNoteEl = document.getElementById("target-note");
+  const targetStringEl = document.getElementById("target-string");
+  const feedbackEl = document.getElementById("feedback");
+  const boardContainerEl = document.getElementById("board-container");
+  const boardEl = document.getElementById("board");
+  const markerEl = document.getElementById("marker");
+  const labelsEl = document.getElementById("labels");
+  const modeSwitchEl = document.getElementById("mode-switch");
+  const numberEntryEl = document.getElementById("number-entry");
+  const fretInputEl = document.getElementById("fret-input");
+  const submitFretEl = document.getElementById("submit-fret");
+
+  let current = null; // { noteName, semitone, string, fret }
+
+  function isTypeMode() {
+    return modeSwitchEl.checked;
+  }
+
+  function applyMode() {
+    boardContainerEl.style.display = isTypeMode() ? "none" : "inline-block";
+    numberEntryEl.style.display = isTypeMode() ? "flex" : "none";
+    if (isTypeMode()) fretInputEl.focus();
+  }
+
+  function randomFrom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function buildLabels() {
+    labelsEl.innerHTML = "";
+    for (let i = 0; i < 6; i++) {
+      const stringNumber = i + 1;
+      const span = document.createElement("span");
+      span.textContent = stringNumber;
+      span.style.top = (STRING_CENTERS[i] * 100) + "%";
+      span.dataset.string = stringNumber;
+      labelsEl.appendChild(span);
+    }
+  }
+
+  function highlightActiveLabel(stringNumber) {
+    labelsEl.querySelectorAll("span").forEach((span) => {
+      span.classList.toggle("active", Number(span.dataset.string) === stringNumber);
+    });
+  }
+
+  function nextQuestion() {
+    const entry = randomFrom(NOTES);
+    const noteName = Array.isArray(entry.name) ? randomFrom(entry.name) : entry.name;
+    const string = randomFrom(TARGET_STRINGS);
+    const fret = (entry.semitone - OPEN_STRING_SEMITONE[string] + 12) % 12;
+
+    current = { noteName, semitone: entry.semitone, string, fret };
+    targetNoteEl.textContent = noteName;
+    targetStringEl.textContent = string;
+    feedbackEl.textContent = "";
+    feedbackEl.className = "feedback";
+    markerEl.className = "marker";
+    highlightActiveLabel(string);
+    fretInputEl.value = "";
+    if (isTypeMode()) fretInputEl.focus();
+  }
+
+  function submitFretAnswer() {
+    if (!current || fretInputEl.value === "") return;
+    const guess = Number(fretInputEl.value);
+    const correct = guess === current.fret;
+
+    if (correct) {
+      feedbackEl.textContent = "Correct!";
+      feedbackEl.className = "feedback correct";
+      setTimeout(nextQuestion, 700);
+    } else {
+      feedbackEl.textContent = "Try again";
+      feedbackEl.className = "feedback wrong";
+    }
+  }
+
+  function fracToFret(fracX) {
+    for (let i = 0; i < FRET_EDGES.length - 1; i++) {
+      if (fracX >= FRET_EDGES[i] && fracX < FRET_EDGES[i + 1]) return i;
+    }
+    return null;
+  }
+
+  function fracToString(fracY) {
+    for (let i = 0; i < STRING_EDGES.length - 1; i++) {
+      if (fracY >= STRING_EDGES[i] && fracY < STRING_EDGES[i + 1]) return i + 1;
+    }
+    return null;
+  }
+
+  function showMarker(fracX, fracY, correct) {
+    markerEl.style.left = (fracX * 100) + "%";
+    markerEl.style.top = (fracY * 100) + "%";
+    markerEl.className = "marker " + (correct ? "show-correct" : "show-wrong");
+  }
+
+  boardEl.addEventListener("click", (e) => {
+    if (!current) return;
+    const rect = boardEl.getBoundingClientRect();
+    const fracX = (e.clientX - rect.left) / rect.width;
+    const fracY = (e.clientY - rect.top) / rect.height;
+
+    const fret = fracToFret(fracX);
+    const string = fracToString(fracY);
+    if (fret === null || string === null) return;
+
+    const correct = fret === current.fret && string === current.string;
+    showMarker(fracX, fracY, correct);
+
+    if (correct) {
+      feedbackEl.textContent = "Correct!";
+      feedbackEl.className = "feedback correct";
+      setTimeout(nextQuestion, 700);
+    } else {
+      feedbackEl.textContent = "Try again";
+      feedbackEl.className = "feedback wrong";
+    }
+  });
+
+  modeSwitchEl.addEventListener("change", () => {
+    applyMode();
+    nextQuestion();
+  });
+
+  submitFretEl.addEventListener("click", submitFretAnswer);
+  fretInputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitFretAnswer();
+  });
+
+  buildLabels();
+  applyMode();
+  nextQuestion();
+</script>
+</body>
+</html>
